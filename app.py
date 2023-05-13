@@ -1,8 +1,8 @@
 from gpt_index import SimpleDirectoryReader, GPTListIndex, GPTSimpleVectorIndex, LLMPredictor, PromptHelper
 from langchain.chat_models import ChatOpenAI
-import gradio as gr
-import sys
-import os
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
 
 os.environ["OPENAI_API_KEY"] = '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'
 
@@ -29,10 +29,12 @@ def chatbot(input_text):
     response = index.query(input_text, response_mode="compact")
     return response.response
 
-iface = gr.Interface(fn=chatbot,
-                     inputs=gr.components.Textbox(lines=7, label="Enter your text"),
-                     outputs="text",
-                     title="Custom-trained AI Chatbot")
+@app.route('/chat', methods=['POST'])
+def chat():
+    input_text = request.json['input_text']
+    response = chatbot(input_text)
+    return jsonify({'response': response})
 
-index = construct_index("docs")
-iface.launch(share=True)
+if __name__ == '__main__':
+    index = construct_index("docs")
+    app.run()
